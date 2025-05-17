@@ -5,13 +5,17 @@ import cors from 'cors';
 const app = express();
 app.use(express.json());
 
-// ✅ Allow CORS from Wix domain and handle preflight
-app.use(cors({
-  origin: 'https://www.credfix.in',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  credentials: true,
-  allowedHeaders: ['Content-Type']
-}));
+// ✅ Handle CORS manually (including preflight)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://www.credfix.in");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  res.header("Access-Control-Allow-Credentials", "true");
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // ✅ Replace with your actual PhonePe token and URL
 const ACCESS_TOKEN = 'O-Bearer YOUR_ACCESS_TOKEN';  // Replace this
@@ -54,7 +58,6 @@ app.post('/create-payment', async (req, res) => {
   }
 });
 
-// Start server
 app.listen(3000, () => {
   console.log('Server running on port 3000');
 });
