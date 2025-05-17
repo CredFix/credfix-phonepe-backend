@@ -3,19 +3,27 @@ import axios from 'axios';
 import cors from 'cors';
 
 const app = express();
-app.use(cors());
 app.use(express.json());
 
-const ACCESS_TOKEN = 'O-Bearer YOUR_ACCESS_TOKEN'; // 👈 Replace this with actual token
-const REDIRECT_URL = 'https://www.credfix.in/thank-you'; // 👈 Update if needed
+// ✅ Allow requests from your Wix domain
+app.use(cors({
+  origin: 'https://www.credfix.in',
+  methods: ['POST'],
+  allowedHeaders: ['Content-Type']
+}));
 
+// Replace with your actual PhonePe access token
+const ACCESS_TOKEN = 'O-Bearer YOUR_ACCESS_TOKEN';  // Replace this
+const REDIRECT_URL = 'https://www.credfix.in/thank-you';  // Redirect after payment
+
+// 📦 Create Payment API
 app.post('/create-payment', async (req, res) => {
   const { amount, orderId } = req.body;
 
   const payload = {
     merchantOrderId: orderId,
-    amount: amount * 100,
-    expireAfter: 1200,
+    amount: amount * 100, // convert to paise
+    expireAfter: 1200,     // 20 minutes expiry
     paymentFlow: {
       type: "PG_CHECKOUT",
       message: "Thank you for applying at CredFix",
@@ -27,7 +35,7 @@ app.post('/create-payment', async (req, res) => {
 
   try {
     const response = await axios.post(
-      'https://api.phonepe.com/apis/pg/checkout/v2/pay',
+      'https://api.phonepe.com/apis/pg/checkout/v2/pay', // PROD URL
       payload,
       {
         headers: {
@@ -40,7 +48,7 @@ app.post('/create-payment', async (req, res) => {
     const redirectUrl = response.data.redirectUrl;
     res.send({ redirectUrl });
   } catch (err) {
-    console.error(err.response?.data || err);
+    console.error('PhonePe error:', err.response?.data || err.message);
     res.status(500).send('Payment initiation failed');
   }
 });
